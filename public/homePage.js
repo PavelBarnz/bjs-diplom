@@ -85,13 +85,19 @@ ApiConnector.getFavorites(data => {
         userFavorites.clearTable(data.data);
     };
     userFavorites.fillTable(data.data);
-    let x = new MoneyManager();
-    x.updateUsersList(data.data);
+    let userList = new MoneyManager();
+    userList.updateUsersList(data.data);
 });
 
+//Добавление пользователя в список избранного
+let addUser = new FavoritesWidget();
+addUser.addUserCallback = data => {
+    console.log(data);//возвращается пустой объект.
+};
+
 //Удаление пользователя из списка избранного.
-let x = new FavoritesWidget();
-x.removeUserCallback = data => {
+let remUser = new FavoritesWidget();
+remUser.removeUserCallback = data => {
     ApiConnector.removeUserFromFavorites(data, response => {
         if(response.success === true){
             ProfileWidget.showProfile(response.data);
