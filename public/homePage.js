@@ -22,16 +22,15 @@ ApiConnector.current(response => {
 
 
 //Получение курсов валют.
-let exchangeRates = new RatesBoard();
+let ratesBoard = new RatesBoard();
 
 let getExchangeRates = () => {//Функция для получения курсов валют.
     ApiConnector.getStocks(response => {
         if(response.success === true){
-            exchangeRates.clearTable();
-            exchangeRates.fillTable(response.data);
+            ratesBoard.clearTable();
+            ratesBoard.fillTable(response.data);
         };
     });
-    console.log(1234);
 };
 
 getExchangeRates()//Однократный вызов функции для получения курсов валют.
@@ -40,38 +39,36 @@ setInterval(getExchangeRates, 60000);//Интервал для вызова фу
 
 
 //Операции с деньгами
-let MM = new MoneyManager();
+let moneyManager = new MoneyManager();
+let favoritesWidget = new FavoritesWidget();
 
 //Пополнение баланса
-MM.addMoneyCallback = data => {
+moneyManager.addMoneyCallback = data => {
     ApiConnector.addMoney(data, response => {
         if(response.success === true){
             ProfileWidget.showProfile(response.data)
         };
-        let answer = new FavoritesWidget();
-        answer.setMessage(response.success, response.error || "Счет пополнен");
+        favoritesWidget.setMessage(response.success, response.error || "Счет пополнен");
     });
 };
 
 //Конвертация валюты
-MM.conversionMoneyCallback = data => {
+moneyManager.conversionMoneyCallback = data => {
     ApiConnector.convertMoney(data, response => {
         if(response.success === true){
             ProfileWidget.showProfile(response.data);
         };
-        let answer = new FavoritesWidget();
-        answer.setMessage(response.success, response.error || "Конвертация успешна");
+        favoritesWidget.setMessage(response.success, response.error || "Конвертация успешна");
     })
 };
 
 //Перевод денег.
-MM.sendMoneyCallback = data => {
+moneyManager.sendMoneyCallback = data => {
     ApiConnector.transferMoney(data, response => {
         if(response.success === true){
             ProfileWidget.showProfile(response.data);
         };
-        let answer = new FavoritesWidget();
-        answer.setMessage(response.success, response.error || "Перевод выполнен");
+        favoritesWidget.setMessage(response.success, response.error || "Перевод выполнен");
     });
 };
 
@@ -79,30 +76,38 @@ MM.sendMoneyCallback = data => {
 //Список избранного.
 
 //Отрисовка Адресной книги и заполнение списка передачи денег.
-let userFavorites = new FavoritesWidget();
-ApiConnector.getFavorites(data => {
-    if(data.success === true){
-        userFavorites.clearTable(data.data);
-    };
-    userFavorites.fillTable(data.data);
-    let userList = new MoneyManager();
-    userList.updateUsersList(data.data);
-});
+function getUsersList() {
+    ApiConnector.getFavorites(response => {
+        if(response.success === true){
+            favoritesWidget.clearTable();
+            favoritesWidget.fillTable(response.data);
+            moneyManager.updateUsersList(response.data);
+        };
+    });
+};
+
+getUsersList();
 
 //Добавление пользователя в список избранного
-let addUser = new FavoritesWidget();
-addUser.addUserCallback = data => {
-    console.log(data);//возвращается пустой объект.
+favoritesWidget.addUserCallback = (data) => {
+    ApiConnector.addUserToFavorites(data, response => {
+        if(response.success === true){
+            favoritesWidget.clearTable();
+            favoritesWidget.fillTable(response.data);
+            moneyManager.updateUsersList(response.data);
+            getUsersList();
+        };
+    })
 };
 
 //Удаление пользователя из списка избранного.
-let remUser = new FavoritesWidget();
-remUser.removeUserCallback = data => {
+favoritesWidget.removeUserCallback = data => {
     ApiConnector.removeUserFromFavorites(data, response => {
         if(response.success === true){
-            ProfileWidget.showProfile(response.data);
+            favoritesWidget.clearTable();
+            favoritesWidget.fillTable(response.data);
+            getUsersList();
         };
-        let answer = new FavoritesWidget();
-        answer.setMessage(response.success, response.error || "Перевод выполнен");
+        favoritesWidget.setMessage(response.success, response.error || "Контакт удален");
     })
 };
